@@ -14,11 +14,12 @@ defmodule WebServer.Router do
   end
 
   get "/*path" do
-    file_path = Path.join([base_dir()] ++ path)
-    
+    base_dir = base_dir()
+    file_path = Path.join([base_dir] ++ path)
+
     # Prevent directory traversal attacks
     expanded_path = Path.expand(file_path)
-    if String.starts_with?(expanded_path, base_dir()) and File.regular?(expanded_path) do
+    if within_base_dir?(expanded_path, base_dir) and File.regular?(expanded_path) do
       if String.ends_with?(expanded_path, ".md") do
         render_markdown(conn, expanded_path)
       else
@@ -26,6 +27,20 @@ defmodule WebServer.Router do
       end
     else
       send_resp(conn, 404, "Not found")
+    end
+  end
+
+  defp within_base_dir?(path, base_dir) do
+    with {:ok, base_real} <- File.realpath(base_dir),
+         {:ok, path_real} <- File.realpath(path) do
+      relative = Path.relative_to(path_real, base_real)
+
+      case Path.split(relative) do
+        [".." | _rest] -> false
+        _ -> true
+      end
+    else
+      _ -> false
     end
   end
 
