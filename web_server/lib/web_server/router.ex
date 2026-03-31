@@ -31,17 +31,11 @@ defmodule WebServer.Router do
   end
 
   defp within_base_dir?(path, base_dir) do
-    with {:ok, base_real} <- File.realpath(base_dir),
-         {:ok, path_real} <- File.realpath(path) do
-      relative = Path.relative_to(path_real, base_real)
-
-      case Path.split(relative) do
-        [".." | _rest] -> false
-        _ -> true
-      end
-    else
-      _ -> false
-    end
+    path_expanded = Path.expand(path)
+    base_expanded = Path.expand(base_dir)
+    
+    relative = Path.relative_to(path_expanded, base_expanded)
+    not String.starts_with?(relative, "../") and relative != ".."
   end
 
   defp render_readme(conn) do
