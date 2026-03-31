@@ -33,9 +33,14 @@ defmodule WebServer.Router do
   defp within_base_dir?(path, base_dir) do
     path_expanded = Path.expand(path)
     base_expanded = Path.expand(base_dir)
-    base_with_sep = String.trim_trailing(base_expanded, "/") <> "/"
 
-    path_expanded == base_expanded or String.starts_with?(path_expanded, base_with_sep)
+    # Split into components for an exact segment-by-segment prefix match.
+    # This prevents both traversal (../) and sibling prefix collisions
+    # (e.g. /project vs /project-evil).
+    path_parts = Path.split(path_expanded)
+    base_parts = Path.split(base_expanded)
+
+    List.starts_with?(path_parts, base_parts)
   end
 
   defp render_readme(conn) do
