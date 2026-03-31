@@ -33,9 +33,9 @@ defmodule WebServer.Router do
   defp within_base_dir?(path, base_dir) do
     path_expanded = Path.expand(path)
     base_expanded = Path.expand(base_dir)
-    
-    relative = Path.relative_to(path_expanded, base_expanded)
-    not String.starts_with?(relative, "../") and relative != ".."
+    base_with_sep = String.trim_trailing(base_expanded, "/") <> "/"
+
+    path_expanded == base_expanded or String.starts_with?(path_expanded, base_with_sep)
   end
 
   defp render_readme(conn) do
